@@ -2,43 +2,19 @@ const express = require("express");
 const app = express(); 
 const morgan = require("morgan")
 const postFuncs = require("./postBank")
+const postList = require("./postList")
 const timeAgo = require("node-time-ago")
+
 const PORT = 1337;
 
-app.use(express.static('public'))
+app.use(express.static('public')) // static routing to public directory
+app.use(morgan("dev")) //middleware
 
-const posts = postFuncs.list()
-const find = postFuncs.find()
-
-const html = `<!DOCTYPE HTML>
- <html>
-   <head>
-      <title> Wizard News </title>
-      <link rel="stylesheet" href="/style.css" />
-   </head>
-   <body>
-      <div class="news-list">
-        <header><img src="/logo.png"/> Wizard News </header>
-        ${posts.map(post => `
-            <div class="new-item">
-              <p>
-                <span class="news-position">${post.id}.
-              </span><a href="/posts/${post.id}">${post.title}</a>
-                <small> (by ${post.name})</small>
-              </p>
-              <small class="news-info">
-                ${post.upvotes} upvotes | ${timeAgo(post.date)}
-              </small>
-            </div>`
-            ).join('')}
-      </div>
-    </body>
-  </html>`
-
+const posts = postFuncs.list()  // storing function list() exported from postBank module object in a const
+const find = postFuncs.find()  // storing function find() exported from postBank module object in a const
 
 app.get("/", (req, res) => {
-  res.send(html) 
-  
+  res.send(postList) 
 });
 
 app.get("/posts/:id", (req, res, next) => {
@@ -46,7 +22,7 @@ app.get("/posts/:id", (req, res, next) => {
   const post = postFuncs.find(id)
 
   if(!post.id){
-    next(new Error("page not found"))
+    next(new Error("this is an error"))
   }else{
     const html2 = `<!DOCTYPE HTML>
     <html>
@@ -57,7 +33,7 @@ app.get("/posts/:id", (req, res, next) => {
       <body>
          <div class="news-list">
            <header><img src="/logo.png"/> Wizard News </header>
-           
+          
                <div class="new-item">
                  <p>
                   ${post.title}
@@ -73,15 +49,14 @@ app.get("/posts/:id", (req, res, next) => {
   }
   })
 
+// creating error handler ; should always go before .listen
 
   app.use( function (err,req, res, next) {
-    // console.log(err.message)
+    console.log(err.message)
     if(err.message){
       res.send("Page not found")
     }
   })
-
-
 
 
 app.listen(PORT, () => {
